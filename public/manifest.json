@@ -1,0 +1,21 @@
+{
+  "name": "Dino Egg Pop!",
+  "short_name": "DinoPop",
+  "description": "Pop eggs, collect dinos, and build your nest!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E0F2FE",
+  "theme_color": "#0369A1",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/dino/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/dino/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

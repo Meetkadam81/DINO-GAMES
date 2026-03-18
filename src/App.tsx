@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Zap, Home, Play, Star, Sparkles, Gift, AlertCircle } from 'lucide-react';
+import { Trophy, Zap, Home, Play, Star, Sparkles, Gift, AlertCircle, Download } from 'lucide-react';
 import { DinoType, DINO_TYPES, Egg, Particle, Collection, SHOP_EGGS, ShopEgg } from './types';
 import { soundService } from './services/soundService';
 
@@ -38,6 +38,41 @@ export default function App() {
   const [selectedEggId, setSelectedEggId] = useState<string | null>(() => {
     return localStorage.getItem('selected_egg_id');
   });
+
+  // PWA Install Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
+      setIsInstalled(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   // Persistence
   useEffect(() => {
@@ -163,6 +198,18 @@ export default function App() {
                 <Trophy size={28} />
                 EGG SHOP
               </button>
+
+              {!isInstalled && deferredPrompt && (
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={handleInstallClick}
+                  className="bg-[#0369A1] hover:bg-[#075985] text-white text-xl font-bold py-4 rounded-3xl shadow-[0_6px_0_#0C4A6E] active:translate-y-1 active:shadow-[0_3px_0_#0C4A6E] transition-all flex items-center justify-center gap-3 mt-4"
+                >
+                  <Download size={24} />
+                  INSTALL APP
+                </motion.button>
+              )}
             </div>
           </motion.div>
         )}
