@@ -42,8 +42,13 @@ export default function App() {
   // PWA Install Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
+    // Check if in iframe
+    setIsInIframe(window.self !== window.top);
+
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
       setIsInstalled(true);
@@ -72,6 +77,17 @@ export default function App() {
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
     }
+  };
+
+  const handlePlayClick = async () => {
+    if (deferredPrompt && !isInstalled && !isInIframe) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+    setScreen('game');
   };
 
   // Persistence
@@ -184,11 +200,11 @@ export default function App() {
             
             <div className="flex flex-col gap-4 w-full max-w-xs">
               <button
-                onClick={() => setScreen('game')}
+                onClick={handlePlayClick}
                 className="bg-[#4ADE80] hover:bg-[#22C55E] text-white text-3xl font-bold py-6 rounded-3xl shadow-[0_8px_0_#166534] active:translate-y-1 active:shadow-[0_4px_0_#166534] transition-all flex items-center justify-center gap-3"
               >
                 <Play fill="currentColor" size={32} />
-                PLAY
+                {deferredPrompt && !isInstalled ? 'INSTALL & PLAY' : 'PLAY'}
               </button>
               
               <button
@@ -199,18 +215,85 @@ export default function App() {
                 EGG SHOP
               </button>
 
-              {!isInstalled && deferredPrompt && (
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={handleInstallClick}
-                  className="bg-[#0369A1] hover:bg-[#075985] text-white text-xl font-bold py-4 rounded-3xl shadow-[0_6px_0_#0C4A6E] active:translate-y-1 active:shadow-[0_3px_0_#0C4A6E] transition-all flex items-center justify-center gap-3 mt-4"
-                >
-                  <Download size={24} />
-                  INSTALL APP
-                </motion.button>
+              {!isInstalled && (
+                <>
+                  {deferredPrompt && !isInIframe ? (
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={handleInstallClick}
+                      className="bg-[#0369A1] hover:bg-[#075985] text-white text-xl font-bold py-4 rounded-3xl shadow-[0_6px_0_#0C4A6E] active:translate-y-1 active:shadow-[0_3px_0_#0C4A6E] transition-all flex items-center justify-center gap-3 mt-4"
+                    >
+                      <Download size={24} />
+                      INSTALL APP
+                    </motion.button>
+                  ) : (
+                    <button
+                      onClick={() => setShowInstallGuide(true)}
+                      className="text-[#0369A1] font-bold text-sm underline mt-4 opacity-70"
+                    >
+                      How to download this app?
+                    </button>
+                  )}
+                </>
               )}
             </div>
+
+            {/* Install Guide Modal */}
+            <AnimatePresence>
+              {showInstallGuide && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    className="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl text-left"
+                  >
+                    <h3 className="text-2xl font-black text-[#0369A1] mb-4">HOW TO INSTALL</h3>
+                    
+                    {isInIframe ? (
+                      <div className="space-y-4 text-slate-600 font-medium">
+                        <p className="bg-blue-50 p-4 rounded-2xl border-2 border-blue-100">
+                          🚀 <strong>Step 1:</strong> Tap the <strong>"Open in New Tab"</strong> button at the top of the screen.
+                        </p>
+                        <p>
+                          Once opened in a new tab, the <strong>"Install App"</strong> button will appear here!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 text-slate-600 font-medium">
+                        <div className="bg-slate-50 p-4 rounded-2xl">
+                          <p className="font-black text-[#0369A1] mb-2">FOR IPHONE (SAFARI):</p>
+                          <ol className="list-decimal list-inside space-y-2 text-sm">
+                            <li>Tap the <strong>Share</strong> button (square with arrow)</li>
+                            <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                            <li>Tap <strong>"Add"</strong> in the corner</li>
+                          </ol>
+                        </div>
+                        <div className="bg-slate-50 p-4 rounded-2xl">
+                          <p className="font-black text-[#0369A1] mb-2">FOR ANDROID (CHROME):</p>
+                          <ol className="list-decimal list-inside space-y-2 text-sm">
+                            <li>Tap the <strong>3 dots</strong> in the corner</li>
+                            <li>Tap <strong>"Install App"</strong> or "Add to Home Screen"</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => setShowInstallGuide(false)}
+                      className="w-full mt-6 bg-[#0369A1] text-white font-black py-4 rounded-2xl"
+                    >
+                      GOT IT!
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
 
