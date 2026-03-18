@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Zap, Home, Play, Star, Sparkles, Gift, AlertCircle, Download } from 'lucide-react';
 import { DinoType, DINO_TYPES, Egg, Particle, Collection, SHOP_EGGS, ShopEgg } from './types';
 import { soundService } from './services/soundService';
+import AdUnit from './components/AdUnit';
 
 const EGG_COLORS = ['chicken', 'triceratops', 'stego', 'raptor', 'trex'] as DinoType[];
 const AD_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -237,6 +238,11 @@ export default function App() {
                   )}
                 </>
               )}
+            </div>
+
+            {/* Ad Unit at the bottom of the start screen */}
+            <div className="mt-8 w-full max-w-xs">
+              <AdUnit slot="3637018012" />
             </div>
 
             {/* Install Guide Modal */}
