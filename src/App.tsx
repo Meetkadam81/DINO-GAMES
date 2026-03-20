@@ -40,6 +40,31 @@ export default function App() {
     return localStorage.getItem('selected_egg_id');
   });
 
+  // Player name for leaderboard
+  const [playerName, setPlayerName] = useState<string>(() => {
+    return localStorage.getItem('player_name') || '';
+  });
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const prevScreenRef = useRef<string>('start');
+
+  // Auto-submit score to leaderboard when leaving game screen
+  useEffect(() => {
+    if (prevScreenRef.current === 'game' && screen !== 'game' && score > 0) {
+      const name = playerName || 'Anonymous';
+      fetch('https://ogwdxusmzuvetwzqzjyk.supabase.co/rest/v1/scores', {
+        method: 'POST',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nd2R4dXNtenV2ZXR3enF6anlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NzE2MTYsImV4cCI6MjA4OTU0NzYxNn0.PxhztYoDS70791o_BAUDrBo0zpW0HYQHTHn_zceFmKY',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nd2R4dXNtenV2ZXR3enF6anlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NzE2MTYsImV4cCI6MjA4OTU0NzYxNn0.PxhztYoDS70791o_BAUDrBo0zpW0HYQHTHn_zceFmKY',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ player_name: name, score: score })
+      }).catch(e => console.error('Leaderboard submit failed:', e));
+    }
+    prevScreenRef.current = screen;
+  }, [screen]);
+
   // PWA Install Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -88,6 +113,18 @@ export default function App() {
         setDeferredPrompt(null);
       }
     }
+    if (!playerName) {
+      setShowNamePrompt(true);
+    } else {
+      setScreen('game');
+    }
+  };
+
+  const handleNameSubmit = () => {
+    const trimmed = nameInput.trim() || 'Anonymous';
+    setPlayerName(trimmed);
+    localStorage.setItem('player_name', trimmed);
+    setShowNamePrompt(false);
     setScreen('game');
   };
 
@@ -244,6 +281,50 @@ export default function App() {
             <div className="mt-8 w-full max-w-xs">
               <AdUnit slot="3637018012" />
             </div>
+
+            {/* Name Prompt Modal */}
+            <AnimatePresence>
+              {showNamePrompt && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    className="bg-white rounded-[40px] p-8 max-w-sm w-full shadow-2xl text-center"
+                  >
+                    <div className="text-5xl mb-4">🏆</div>
+                    <h3 className="text-2xl font-black text-[#0369A1] mb-2">YOUR NAME?</h3>
+                    <p className="text-slate-500 font-bold text-sm mb-6">So we can show you on the leaderboard!</p>
+                    <input
+                      type="text"
+                      maxLength={12}
+                      placeholder="Enter your name"
+                      value={nameInput}
+                      onChange={e => setNameInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleNameSubmit()}
+                      autoFocus
+                      className="w-full border-4 border-[#BAE6FD] rounded-2xl px-4 py-3 text-lg font-bold text-[#0369A1] outline-none focus:border-[#0369A1] mb-4 text-center"
+                    />
+                    <button
+                      onClick={handleNameSubmit}
+                      className="w-full bg-[#4ADE80] text-white text-xl font-black py-4 rounded-3xl shadow-[0_6px_0_#166534] active:translate-y-1 active:shadow-[0_3px_0_#166534] transition-all"
+                    >
+                      LET'S GO! 🦕
+                    </button>
+                    <button
+                      onClick={() => { setShowNamePrompt(false); setScreen('game'); }}
+                      className="mt-4 text-slate-400 font-bold text-sm"
+                    >
+                      Skip (stay Anonymous)
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Install Guide Modal */}
             <AnimatePresence>
